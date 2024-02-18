@@ -135,6 +135,8 @@ class HelloWorld(FlowLauncher):
                 }
             }
         ]
+        elif query.startswith("cvss"):
+            self.open_url("https://cvssadvisor.com")
         elif query.startswith("ocr"):
             return [{
                 "Title": "Clipboard OCR",

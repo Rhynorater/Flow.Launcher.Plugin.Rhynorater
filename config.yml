@@ -1,0 +1,65 @@
+# espanso match file
+
+# For a complete introduction, visit the official docs at: https://espanso.org/docs/
+
+# You can use this file to define the base matches (aka snippets)
+# that will be available in every application when using espanso.
+
+# Matches are substitution rules: when you type the "trigger" string
+# it gets replaced by the "replace" string.
+matches:
+  - trigger: ":shrug"
+    replace: "¯\_(ツ)_/¯"
+
+#1234
+
+ # Critical Thinking related stuff
+  - trigger: ":ctem"
+    replace: "justin@criticalthinkingpodcast.io"
+  - trigger: ":ctbb"
+    replace: "https://ctbb.show"
+  - trigger: ":ctdis"
+    replace: "https://ctbb.show/discord"
+
+
+# IP and Server Stuff
+  - trigger: ":eip"
+    replace: "{{output2}}"
+    vars:
+      - name: output2
+        type: shell
+        params:
+          cmd: "wsl curl -s https://ipinfo.io/ip"
+
+  - trigger: ":serverip"
+    replace: "45.55.124.251"
+  - trigger: ":poc"
+    replace: "poc.rhynorater.com"
+  - trigger: ":hpoc"
+    replace: "https://poc.rhynorater.com"
+
+# Testing Creds
+  - trigger: ":h1p"
+    replace: "H1Testing123#"
+  - trigger: ":wh1"
+    replace: "rhynorater@wearehackerone.com"
+  - trigger: ":wh2"
+    replace: "rhynorater+2@wearehackerone.com"
+  - trigger: ":wh3"
+    replace: "rhynorater+3@wearehackerone.com"
+  - trigger: ":wh4"
+    replace: "rhynorater+4@wearehackerone.com"
+  - trigger: ":wh5"
+    replace: "rhynorater+5@wearehackerone.com"
+  - trigger: ":wh6"
+    replace: "rhynorater+6@wearehackerone.com"
+  - trigger: ":wh7"
+    replace: "rhynorater+7@wearehackerone.com"
+  - trigger: ":wh8"
+    replace: "rhynorater+8@wearehackerone.com"
+  - trigger: ":wh9"
+    replace: "rhynorater+9@wearehackerone.com"
+
+
+  # And much more! For more information, visit the docs: https://espanso.org/docs/
+
