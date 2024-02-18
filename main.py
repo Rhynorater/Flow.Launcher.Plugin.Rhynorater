@@ -218,8 +218,7 @@ class RhynoLauncher(FlowLauncher):
             sha1 = hashlib.sha1()
             sha1.update(query[1:-1].encode("utf-8"))
             sha1 = sha1.hexdigest()
-
-            return [{
+            res =  [{
                 "Title": "Char Count (not including \"s)",
                 "SubTitle": str(len(query[1:-1])),
                 "IcoPath": "Images/app.png",
@@ -238,14 +237,6 @@ class RhynoLauncher(FlowLauncher):
             },{
                 "Title": "Hex",
                 "SubTitle": query[1:-1].encode("utf-8").hex(),
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "copy",
-                    "parameters": [query[1:-1].encode("utf-8").hex()]
-                }
-            },{
-                "Title": "Hex (0x)",
-                "SubTitle": "0x"+query[1:-1].encode("utf-8").hex(),
                 "IcoPath": "Images/app.png",
                 "JsonRPCAction": {
                     "method": "copy",
@@ -277,18 +268,24 @@ class RhynoLauncher(FlowLauncher):
                 }
             }]
 
-        # return [
-        #     {
-        #         "Title": "Hello Worldz, this is where title goes. {}".format(('Your query is: ' + query , query)[query == '']),
-        #         "SubTitle": "This is where your subtitle goes, press enter to open Flow's url",
-        #         "IcoPath": "Images/app.png",
-        #         "JsonRPCAction": {
-        #             "method": "open_url",
-        #             "parameters": ["https://github.com/Flow-Launcher/Flow.Launcher"]
-        #         }
-        #     }
-        # ]
-
+            try:
+                d = query[1:-1].lower()
+                if d.startswith("0x"):
+                    d = d[2:]
+                d = bytearray.fromhex(d).decode()
+                res.insert(2, {
+                "Title": "Hex Decoding",
+                "SubTitle": d,
+                "IcoPath": "Images/app.png",
+                "JsonRPCAction": {
+                    "method": "copy",
+                    "parameters": [d]
+                }
+                })
+            except:
+                pass
+                
+            return res
     def context_menu(self, data):
         return [
             {
