@@ -1,8 +1,8 @@
 {
     "ID": "2f4e384e-76ce-45c3-aea2-b16f5e5c328f",
     "ActionKeyword": "*",
-    "Name": "RCFP",
-    "Description": "Rhynorater's custom Flow plugin",
+    "Name": "RhynoLauncher",
+    "Description": "Rhynorater's custom launcher",
     "Author": "Flow Launcher",
     "Version": "1.0.0",
     "Language": "python",

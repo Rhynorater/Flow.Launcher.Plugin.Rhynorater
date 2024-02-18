@@ -18,7 +18,7 @@ import urllib.parse
 import hashlib
 
 
-class HelloWorld(FlowLauncher):
+class RhynoLauncher(FlowLauncher):
     def noop():
         return 
 
@@ -292,12 +292,12 @@ class HelloWorld(FlowLauncher):
     def context_menu(self, data):
         return [
             {
-                "Title": "Hello World Python's Context menu",
+                "Title": "RhynoLauncher",
                 "SubTitle": "Press enter to open Flow the plugin's repo in GitHub",
                 "IcoPath": "Images/app.png",
                 "JsonRPCAction": {
                     "method": "open_url",
-                    "parameters": ["https://github.com/Flow-Launcher/Flow.Launcher.Plugin.HelloWorldPython"]
+                    "parameters": ["https://github.com/Flow-Launcher/Flow.Launcher.Plugin.RhynoLauncherPython"]
                 }
             }
         ]
@@ -334,4 +334,4 @@ class HelloWorld(FlowLauncher):
         webbrowser.open(url)
 
 if __name__ == "__main__":
-    HelloWorld()
+    RhynoLauncher()

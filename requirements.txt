@@ -1,1 +1,4 @@
 flowlauncher
+pyperclip
+pillow
+pytesseract
