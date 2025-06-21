@@ -209,6 +209,21 @@ class RhynoLauncher(FlowLauncher):
             return self.matchAndDelete(query)    
         elif query.startswith("mr"):
             return self.matchAndReplace(query)
+        elif query.startswith("cedit"):
+            cb = pyperclip.paste()
+            temp_file = "C:\\temp\\temp.txt"
+            with open(temp_file, "w", encoding="utf-8") as f:
+                f.write(cb)
+            subprocess.Popen([r"C:\Program Files\Notepad++\notepad++.exe", temp_file])
+            return [{
+                "Title": "Edit in Notepad++",
+                "SubTitle": f"Opened {temp_file} in Notepad++",
+                "IcoPath": "Images/app.png",
+                "JsonRPCAction": {
+                    "method": "noop",
+                    "parameters": []
+                }
+            }]
         elif query.startswith("chex"):
             cb = pyperclip.paste()
             temp_file = "C:\\temp\\temp.bin"
