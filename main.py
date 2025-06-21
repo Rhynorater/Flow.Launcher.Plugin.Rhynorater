@@ -16,6 +16,7 @@ import pytesseract
 import base64
 import urllib.parse
 import hashlib
+import json
 
 
 class RhynoLauncher(FlowLauncher):
