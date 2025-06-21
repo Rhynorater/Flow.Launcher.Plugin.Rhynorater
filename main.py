@@ -209,7 +209,7 @@ class RhynoLauncher(FlowLauncher):
             return self.matchAndDelete(query)    
         elif query.startswith("mr"):
             return self.matchAndReplace(query)
-        elif query.startwith("chex"):
+        elif query.startswith("chex"):
             cb = pyperclip.paste()
             temp_file = os.path.join("C:", "temp", "hex_dump.bin")
             with open(temp_file, "w", encoding="utf-8") as f:
