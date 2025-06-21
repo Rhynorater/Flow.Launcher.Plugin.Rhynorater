@@ -20,303 +20,299 @@ import json
 
 
 class RhynoLauncher(FlowLauncher):
-    def noop():
-        return 
+    
+    # Configurable paths
+    USER_PATH_WINDOWS = os.path.expanduser("~") + "\\"
+    USER_PATH_LINUX = "/j/"
+    TEMP_DIR = os.path.join(os.path.expanduser("~"), "AppData", "Local", "Temp")
+    NOTEPADPP_PATH = r"C:\Program Files\Notepad++\notepad++.exe"
+    IMHEX_PATH = r"C:\Program Files\ImHex\imhex.exe"
+    TESSERACT_TEMP_IMG = os.path.join(os.path.expanduser("~"), "AppData", "Local", "Temp", "tmpOcr.png")
 
-    def matchAndReplace(self, query):
-        if query == "mr ":
-            return [{
-                "Title": "Match & Replace",
-                "SubTitle": "Match & Replace what is in your clipboard.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-        pq = query.split(" ")
-        if len(pq) == 3:
-            return [{
-                "Title": "Match & Replace",
-                "SubTitle": f"Match {pq[1]} and replace with {pq[2]}",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "clipMAndR",
-                    "parameters": [pq[1], pq[2]]
-                }
-            }]
-        
-        return [{
-                "Title": "Match & Replace",
-                "SubTitle": "Match & Replace what is in your clipboard.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-
-    def matchAndReplaceRegex(self, query):
-        if query == "mr ":
-            return [{
-                "Title": "Match & Replace (Regex)",
-                "SubTitle": "Match & Replace what is in your clipboard.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-        pq = query.split(" ")
-        if len(pq) == 3:
-            return [{
-                "Title": "Match & Replace (Regex)",
-                "SubTitle": f"Match {pq[1]} and replace with {pq[2]}",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "clipMAndRRegex",
-                    "parameters": [pq[1], pq[2]]
-                }
-            }]
-        
-        return [{
-                "Title": "Match & Replace (Regex)",
-                "SubTitle": "Match & Replace what is in your clipboard.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-
-    def matchAndDelete(self, query):
-        if query == "md ":
-            return [{
-                "Title": "Match & Delete",
-                "SubTitle": "Match & Delete strings from you clipboard.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-        pq = query.split(" ")
-        if len(pq) == 2:
-            return [{
-                "Title": "Match & Delete",
-                "SubTitle": f"Remove {pq[1]} from clipboard string.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "clipMAndD",
-                    "parameters": [pq[1]]
-                }
-            }]
-        
-        return [{
-                "Title": "Match & Delete",
-                "SubTitle": "Match & Delete strings from you clipboard.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-
-
-    def query(self, query):
-        if query.startswith("jwt "):
-            return [
-            {
-                "Title": "jwt.io: "+query,
-                "SubTitle": "Load this shit into JWT.io",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "open_url",
-                    "parameters": ["https://jwt.io/#token="+ query.split(" ")[-1]]
-                }
-            }
+    def __init__(self):
+        self.query_handlers = [
+            ('rhyhelp', self._handle_rhyhelp),
+            ('cvss', self._handle_cvss), # Autolaunch
+            ('pyd', self._handle_pyd), # Autolaunch
+            ('cedit', self._handle_cedit), # Autolaunch
+            ('chex', self._handle_chex), # Autolaunch
+            ('jwt', self._handle_jwt),
+            ('ocr', self._handle_ocr),
+            ('convpath', self._handle_convpath),
+            ('mrr', self._handle_mrr), #Must be above mr
+            ('mr', self._handle_mr),
+            ('mdr', self._handle_mdr), #Must be above md
+            ('md', self._handle_md)
         ]
-        elif query.startswith("cvss"):
-            self.open_url("https://cvssadvisor.com")
-        elif query.startswith("ocr"):
-            return [{
-                "Title": "Clipboard OCR",
-                "SubTitle": "Copy the contents of the image in your clipboard to your clipboard via ocr.",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "clipOCR",
-                    "parameters": []
-                }
-            }] 
-        elif query.startswith("convpath"):
-            cb = pyperclip.paste().lower()
-            if cb.startswith("c:\\users\\justin"):
-                return [{
-                    "Title": "Convert Path (Windows -> Linux)",
-                    "SubTitle": cb+" => "+cb.replace("c:\\users\\justin\\", "/j/").replace("\\", "/"),
-                    "IcoPath": "Images/app.png",
-                    "JsonRPCAction": {
-                        "method": "copy",
-                        "parameters": [cb.replace("c:\\users\\justin\\", "/j/").replace("\\", "/")]
-                    }}]
-            elif cb.startswith("/j/"):
-                return [{
-                        "Title": "Convert Path (Linux -> Windows)",
-                        "SubTitle": cb+" => "+cb.replace("/j/", "c:\\users\\justin\\").replace("/", "\\"),
-                        "IcoPath": "Images/app.png",
-                        "JsonRPCAction": {
-                            "method": "copy",
-                            "parameters": [cb.replace("/j/", "c:\\users\\justin\\").replace("/", "\\")]
-                        }
-                    }]
-        elif query.startswith("pyd"):
-            subprocess.call("wsl python3", creationflags=subprocess.CREATE_NEW_CONSOLE)
-        elif all(map(lambda j: j in ["q","w","a","s","z","x"], list(query))):
-            # q - url encode
-            # w - url decode
-            # a - base64 encode
-            # s - base64 decode
-            # z - json prettify
-            # x - json minify
-            d = pyperclip.paste()
-            query = query.strip() 
-            for l in list(query):
-                
-                if l == "q":
-                    d = urllib.parse.quote(d)
-                elif l == "w":
-                    d = urllib.parse.unquote(d)
-                elif l == "a":
-                    d = base64.b64encode(d.encode("utf-8")).decode()
-                elif l == "s":
-                    d = base64.b64decode(d.encode("utf-8")).decode()
-                elif l == "z":
-                    d = json.dumps(json.loads(d), indent=2)
-                elif l == "x":
-                    d = json.dumps(json.loads(d))
-            return [{
-            "Title": "Text Modification",
-            "SubTitle": "Data: "+d,
+        self.special_handlers = [
+            (self._is_transform_query, self._handle_transforms),
+            (self._is_quoted_query, self._handle_quoted_string),
+        ]
+        super().__init__()
+
+    def _create_default_response(self, title, subtitle, method="noop", params=None):
+        return {
+            "Title": title,
+            "SubTitle": subtitle,
             "IcoPath": "Images/app.png",
             "JsonRPCAction": {
-                "method": "copy",
-                "parameters": [d]
-                }
-            }]
-        elif query.startswith("mrr"):
-            return self.matchAndReplaceRegex(query)
-        elif query.startswith("md"):
-            return self.matchAndDelete(query)    
-        elif query.startswith("mr"):
-            return self.matchAndReplace(query)
-        elif query.startswith("cedit"):
-            cb = pyperclip.paste()
-            temp_file = "C:\\temp\\temp.txt"
-            with open(temp_file, "w", encoding="utf-8") as f:
-                f.write(cb)
-            subprocess.Popen([r"C:\Program Files\Notepad++\notepad++.exe", temp_file])
-            return [{
-                "Title": "Edit in Notepad++",
-                "SubTitle": f"Opened {temp_file} in Notepad++",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-        elif query.startswith("chex"):
-            cb = pyperclip.paste()
-            temp_file = "C:\\temp\\temp.bin"
-            with open(temp_file, "w", encoding="utf-8") as f:
-                f.write(cb)
-            subprocess.Popen([r"C:\Program Files\ImHex\imhex.exe", temp_file])
-            return [{
-                "Title": "Hex Editor",
-                "SubTitle": f"Opened {temp_file} in ImHex",
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            }]
-        elif query.startswith("\"") and query.endswith("\""):
-            md5 = hashlib.md5()
-            md5.update(query[1:-1].encode("utf-8"))
-            md5= md5.hexdigest()
-            sha256 = hashlib.sha256()
-            sha256.update(query[1:-1].encode("utf-8"))
-            sha256 = sha256.hexdigest()
-            sha1 = hashlib.sha1()
-            sha1.update(query[1:-1].encode("utf-8"))
-            sha1 = sha1.hexdigest()
-            res =  [{
-                "Title": "Char Count (not including \"s)",
-                "SubTitle": str(len(query[1:-1])),
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            },{
-                "Title": "Word Count (not including \"s)",
-                "SubTitle": str(len(list(filter(lambda x: x, query[1:-1].split(" "))))),
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "noop",
-                    "parameters": []
-                }
-            },{
-                "Title": "Hex",
-                "SubTitle": query[1:-1].encode("utf-8").hex(),
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "copy",
-                    "parameters": [query[1:-1].encode("utf-8").hex()]
-                }
-            },{
-                "Title": "MD5",
-                "SubTitle": md5,
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "copy",
-                    "parameters": [md5]
-                }
-            },{
-                "Title": "SHA256",
-                "SubTitle": sha256,
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "copy",
-                    "parameters": [sha256]
-                }
-            },{
-                "Title": "SHA1",
-                "SubTitle": sha1,
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "copy",
-                    "parameters": [sha1]
-                }
-            }]
+                "method": method,
+                "parameters": params or []
+            }
+        }
 
-            try:
-                d = query[1:-1].lower()
-                if d.startswith("0x"):
-                    d = d[2:]
-                d = bytearray.fromhex(d).decode()
-                res.insert(2, {
-                "Title": "Hex Decoding",
-                "SubTitle": d,
-                "IcoPath": "Images/app.png",
-                "JsonRPCAction": {
-                    "method": "copy",
-                    "parameters": [d]
-                }
-                })
-            except:
-                pass
-                
-            return res
+    def noop(self):
+        return 
+
+    def _is_transform_query(self, query):
+        return all(c in "qwaszx" for c in query.strip())
+    
+    def _is_quoted_query(self, query):
+        return query.startswith('"') and query.endswith('"')
+
+    def query(self, query):
+        for prefix, handler in self.query_handlers:
+            if query.startswith(prefix):
+                return handler(query)
+
+        for condition, handler in self.special_handlers:
+            if condition(query):
+                return handler(query)
+        
+        return []
+
+    def _handle_rhyhelp(self, query):
+        help_data = [
+            {
+                "title": "RhynoLauncher Help",
+                "subtitle": "The following commands are available:"
+            },
+            {
+                "title": "cvss",
+                "subtitle": "Description: Opens cvssadvisor.com. Example: cvss"
+            },
+            {
+                "title": "pyd",
+                "subtitle": "Description: Opens a WSL python3 console. Example: pyd"
+            },
+            {
+                "title": "cedit",
+                "subtitle": "Description: Opens clipboard content in Notepad++. Example: cedit"
+            },
+            {
+                "title": "chex",
+                "subtitle": "Description: Opens clipboard content in ImHex. Example: chex"
+            },
+            {
+                "title": "jwt <token>",
+                "subtitle": "Description: Decodes a JWT token using jwt.io. Example: jwt ey..."
+            },
+            {
+                "title": "ocr",
+                "subtitle": "Description: OCR on image in clipboard. Example: ocr"
+            },
+            {
+                "title": "convpath",
+                "subtitle": "Description: Converts path in clipboard (Win <-> Linux). Example: convpath"
+            },
+            {
+                "title": "mr <find> <replace>",
+                "subtitle": "Description: Match and replace in clipboard. Example: mr 'foo' 'bar'"
+            },
+            {
+                "title": "mrr <regex> <replace>",
+                "subtitle": r"Description: Regex match and replace in clipboard. Example: mrr '\\s+' ' '"
+            },
+            {
+                "title": "md <string>",
+                "subtitle": "Description: Match and delete string from clipboard. Example: md 'remove'"
+            },
+            {
+                "title": "Transforms (q,w,a,s,z,x)",
+                "subtitle": "q:urlenc, w:urldec, a:b64enc, s:b64dec, z:json pretty, x:json-minify. Ex: 'qa' on clipboard"
+            },
+            {
+                "title": "\"...\"",
+                "subtitle": "Description: Info about a string (counts, hashes, etc). Example: \"hello world\""
+            }
+        ]
+        
+        return [self._create_default_response(item["title"], item["subtitle"]) for item in help_data]
+
+    def _handle_jwt(self, query):
+        token = query.split(" ")[-1]
+        return [self._create_default_response(
+            f"jwt.io: {query}",
+            "Load this shit into JWT.io",
+            "open_url",
+            [f"https://jwt.io/#token={token}"]
+        )]
+
+    def _handle_cvss(self, query):
+        self.open_url("https://cvssadvisor.com")
+        return []
+
+    def _handle_ocr(self, query):
+        return [self._create_default_response(
+            "Clipboard OCR",
+            "Copy the contents of the image in your clipboard to your clipboard via ocr.",
+            "clipOCR"
+        )]
+
+    def _handle_convpath(self, query):
+        cb = pyperclip.paste().lower()
+        if cb.startswith(self.USER_PATH_WINDOWS):
+            converted = cb.replace(self.USER_PATH_WINDOWS, self.USER_PATH_LINUX).replace("\\", "/")
+            return [self._create_default_response(
+                "Convert Path (Windows -> Linux)",
+                f"{cb} => {converted}",
+                "copy",
+                [converted]
+            )]
+        elif cb.startswith(self.USER_PATH_LINUX):
+            converted = cb.replace(self.USER_PATH_LINUX, self.USER_PATH_WINDOWS).replace("/", "\\")
+            return [self._create_default_response(
+                "Convert Path (Linux -> Windows)",
+                f"{cb} => {converted}",
+                "copy",
+                [converted]
+            )]
+        return []
+
+    def _handle_pyd(self, query):
+        subprocess.call("wsl python3", creationflags=subprocess.CREATE_NEW_CONSOLE)
+        return []
+
+    def _handle_mr(self, query):
+        parts = query.split(" ")
+        if len(parts) == 3 and parts[0] == "mr":
+            match_str, replace_str = parts[1], parts[2]
+            return [self._create_default_response(
+                "Match & Replace",
+                f"Match {match_str} and replace with {replace_str}",
+                "clipMAndR",
+                [match_str, replace_str]
+            )]
+        return [self._create_default_response(
+            "Match & Replace",
+            "Match & Replace what is in your clipboard."
+        )]
+
+    def _handle_mrr(self, query):
+        parts = query.split(" ")
+        if len(parts) == 3 and parts[0] == "mrr":
+            match_str, replace_str = parts[1], parts[2]
+            return [self._create_default_response(
+                "Match & Replace (Regex)",
+                f"Match {match_str} and replace with {replace_str}",
+                "clipMAndRRegex",
+                [match_str, replace_str]
+            )]
+        return [self._create_default_response(
+            "Match & Replace (Regex)",
+            "Match & Replace what is in your clipboard."
+        )]
+
+    def _handle_md(self, query):
+        parts = query.split(" ")
+        if len(parts) == 2 and parts[0] == "md":
+            return [self._create_default_response(
+                "Match & Delete",
+                f"Remove {parts[1]} from clipboard string.",
+                "clipMAndD",
+                [parts[1]]
+            )]
+        return [self._create_default_response(
+            "Match & Delete",
+            "Match & Delete strings from your clipboard."
+        )]
+
+    def _handle_mdr(self, query):
+        parts = query.split(" ")
+        if len(parts) == 2 and parts[0] == "mdr":
+            return [self._create_default_response(
+                "Match & Delete (Regex)",
+                f"Remove {parts[1]} from clipboard string.",
+                "clipMAndDRegex",
+                [parts[1]]
+            )]
+        return [self._create_default_response(
+            "Match & Delete (Regex)",
+            "Match & Delete strings from your clipboard."
+        )]
+
+    def _handle_transforms(self, query):
+        d = pyperclip.paste()
+        transformations = {
+            'q': lambda text: urllib.parse.quote(text),
+            'w': lambda text: urllib.parse.unquote(text),
+            'a': lambda text: base64.b64encode(text.encode("utf-8")).decode(),
+            's': lambda text: base64.b64decode(text.encode("utf-8")).decode(),
+            'z': lambda text: json.dumps(json.loads(text), indent=2),
+            'x': lambda text: json.dumps(json.loads(text)),
+        }
+        
+        for char in query.strip():
+            if char in transformations:
+                try:
+                    d = transformations[char](d)
+                except Exception:
+                    # Silently fail on transform error, keeping previous data
+                    pass
+        
+        return [self._create_default_response(
+            "Text Modification",
+            f"Data: {d}",
+            "copy",
+            [d]
+        )]
+    
+    def _handle_cedit(self, query):
+        cb = pyperclip.paste()
+        temp_file = os.path.join(self.TEMP_DIR, "temp.txt")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            f.write(cb)
+        subprocess.Popen([self.NOTEPADPP_PATH, temp_file])
+        return [self._create_default_response(
+            "Edit in Notepad++",
+            f"Opened {temp_file} in Notepad++"
+        )]
+
+    def _handle_chex(self, query):
+        cb = pyperclip.paste()
+        temp_file = os.path.join(self.TEMP_DIR, "temp.bin")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            f.write(cb)
+        subprocess.Popen([self.IMHEX_PATH, temp_file])
+        return [self._create_default_response(
+            "Hex Editor",
+            f"Opened {temp_file} in ImHex"
+        )]
+
+    def _handle_quoted_string(self, query):
+        content = query[1:-1]
+        content_bytes = content.encode("utf-8")
+        
+        res = [
+            self._create_default_response("Char Count (not including \"s)", str(len(content))),
+            self._create_default_response("Word Count (not including \"s)", str(len(list(filter(None, content.split(" ")))))),
+            self._create_default_response("Hex", content_bytes.hex(), "copy", [content_bytes.hex()]),
+            self._create_default_response("MD5", hashlib.md5(content_bytes).hexdigest(), "copy", [hashlib.md5(content_bytes).hexdigest()]),
+            self._create_default_response("SHA256", hashlib.sha256(content_bytes).hexdigest(), "copy", [hashlib.sha256(content_bytes).hexdigest()]),
+            self._create_default_response("SHA1", hashlib.sha1(content_bytes).hexdigest(), "copy", [hashlib.sha1(content_bytes).hexdigest()]),
+        ]
+
+        try:
+            d = content.lower()
+            if d.startswith("0x"):
+                d = d[2:]
+            decoded_hex = bytearray.fromhex(d).decode()
+            res.insert(2, self._create_default_response("Hex Decoding", decoded_hex, "copy", [decoded_hex]))
+        except (ValueError, UnicodeDecodeError):
+            pass
+            
+        return res
+
     def context_menu(self, data):
         return [
             {
@@ -333,9 +329,8 @@ class RhynoLauncher(FlowLauncher):
     def clipOCR(self):
         img = ImageGrab.grabclipboard()
         if img:
-            img.save("C:\\Users\\Justin\\AppData\\Local\\Temp\\tmpOcr.png")
-            self.copy(pytesseract.image_to_string('C:\\Users\\Justin\\AppData\\Local\\Temp\\tmpOcr.png'))
-
+            img.save(self.TESSERACT_TEMP_IMG)
+            self.copy(pytesseract.image_to_string(self.TESSERACT_TEMP_IMG))
 
     def clipMAndR(self, m, r):
         d = pyperclip.paste()
@@ -353,6 +348,11 @@ class RhynoLauncher(FlowLauncher):
     def clipMAndD( self, m):
         d = pyperclip.paste()
         d = d.replace(m, "")
+        pyperclip.copy(d)
+    
+    def clipMAndDRegex(self, m):
+        d = pyperclip.paste()
+        d = re.sub(m, "", d)
         pyperclip.copy(d)
 
     def copy( self, d):
