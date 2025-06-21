@@ -124,6 +124,10 @@ class RhynoLauncher(FlowLauncher):
                 "subtitle": r"Description: Regex match and replace in clipboard. Example: mrr '\\s+' ' '"
             },
             {
+                "title": "mdr <regex>",
+                "subtitle": r"Description: Regex match and delete in clipboard. Example: mdr '\\s+'"
+            },
+            {
                 "title": "md <string>",
                 "subtitle": "Description: Match and delete string from clipboard. Example: md 'remove'"
             },
