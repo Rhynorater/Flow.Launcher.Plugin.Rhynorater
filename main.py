@@ -211,7 +211,7 @@ class RhynoLauncher(FlowLauncher):
             return self.matchAndReplace(query)
         elif query.startswith("chex"):
             cb = pyperclip.paste()
-            temp_file = os.path.join("C:", "temp", "hex_dump.bin")
+            temp_file = "C:\\temp\\temp.bin"
             with open(temp_file, "w", encoding="utf-8") as f:
                 f.write(cb)
             subprocess.Popen([r"C:\Program Files\ImHex\imhex.exe", temp_file])
