@@ -209,6 +209,21 @@ class RhynoLauncher(FlowLauncher):
             return self.matchAndDelete(query)    
         elif query.startswith("mr"):
             return self.matchAndReplace(query)
+        elif query.startwith("chex"):
+            cb = pyperclip.paste()
+            temp_file = os.path.join("C:", "temp", "hex_dump.bin")
+            with open(temp_file, "w", encoding="utf-8") as f:
+                f.write(cb)
+            subprocess.Popen([r"C:\Program Files\ImHex\imhex.exe", temp_file])
+            return [{
+                "Title": "Hex Editor",
+                "SubTitle": f"Opened {temp_file} in ImHex",
+                "IcoPath": "Images/app.png",
+                "JsonRPCAction": {
+                    "method": "noop",
+                    "parameters": []
+                }
+            }]
         elif query.startswith("\"") and query.endswith("\""):
             md5 = hashlib.md5()
             md5.update(query[1:-1].encode("utf-8"))
