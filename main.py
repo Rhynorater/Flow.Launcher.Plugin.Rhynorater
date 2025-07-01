@@ -17,6 +17,8 @@ import base64
 import urllib.parse
 import hashlib
 import json
+import html
+import xml.dom.minidom
 
 
 class RhynoLauncher(FlowLauncher):
@@ -36,7 +38,9 @@ class RhynoLauncher(FlowLauncher):
             ('pyd', self._handle_pyd), # Autolaunch
             ('cedit', self._handle_cedit), # Autolaunch
             ('chex', self._handle_chex), # Autolaunch
+            ('cookie', self._handle_cookie),
             ('jwt', self._handle_jwt),
+            ('ueall', self._handle_ueall),
             ('ocr', self._handle_ocr),
             ('convpath', self._handle_convpath),
             ('mrr', self._handle_mrr), #Must be above mr
@@ -65,7 +69,7 @@ class RhynoLauncher(FlowLauncher):
         return 
 
     def _is_transform_query(self, query):
-        return all(c in "qwaszx" for c in query.strip())
+        return all(c in "qwaszxercv" for c in query.strip())
     
     def _is_quoted_query(self, query):
         return query.startswith('"') and query.endswith('"')
@@ -104,6 +108,14 @@ class RhynoLauncher(FlowLauncher):
                 "subtitle": "Description: Opens clipboard content in ImHex. Example: chex"
             },
             {
+                "title": "cookie",
+                "subtitle": "Description: Replaces `Cookie:.*` with `Cookie: {YOUR COOKIES}` in clipboard. Example: cookie"
+            },
+            {
+                "title": "ueall <string>",
+                "subtitle": "Description: URL encodes all characters in the string. Example: ueall 'hello world'"
+            },
+            {
                 "title": "jwt <token>",
                 "subtitle": "Description: Decodes a JWT token using jwt.io. Example: jwt ey..."
             },
@@ -132,8 +144,8 @@ class RhynoLauncher(FlowLauncher):
                 "subtitle": "Description: Match and delete string from clipboard. Example: md 'remove'"
             },
             {
-                "title": "Transforms (q,w,a,s,z,x)",
-                "subtitle": "q:urlenc, w:urldec, a:b64enc, s:b64dec, z:json pretty, x:json-minify. Ex: 'qa' on clipboard"
+                "title": "Transforms (q,w,a,s,z,x,e,r,c,v)",
+                "subtitle": "q:urlenc, w:urldec, a:b64enc, s:b64dec, z:json pretty, x:json-minify, e:htmlenc, r:htmldec, c:xml pretty, v:xml-minify. Ex: 'qac' on clipboard"
             },
             {
                 "title": "\"...\"",
@@ -150,6 +162,21 @@ class RhynoLauncher(FlowLauncher):
             "Load this shit into JWT.io",
             "open_url",
             [f"https://jwt.io/#token={token}"]
+        )]
+
+    def _handle_ueall(self, query):
+        if query.startswith("ueall "):
+            text_to_encode = query[len("ueall "):]
+            encoded_text = "".join(f"%{c:02x}" for c in text_to_encode.encode('utf-8'))
+            return [self._create_default_response(
+                "URL Encode All",
+                encoded_text,
+                "copy",
+                [encoded_text]
+            )]
+        return [self._create_default_response(
+            "URL Encode All",
+            "Type a string to URL encode (all characters)."
         )]
 
     def _handle_cvss(self, query):
@@ -245,15 +272,28 @@ class RhynoLauncher(FlowLauncher):
             "Match & Delete strings from your clipboard."
         )]
 
+    def _html_encode_all_special(self, text):
+        return "".join(c if c.isalnum() or c.isspace() else f"&#x{hex(ord(c))[2:]};" for c in text)
+
+    def _tolerant_b64decode(self, text):
+        padding = len(text) % 4
+        if padding:
+            text += '=' * (4 - padding)
+        return base64.b64decode(text).decode('utf-8')
+
     def _handle_transforms(self, query):
         d = pyperclip.paste()
         transformations = {
-            'q': lambda text: urllib.parse.quote(text),
+            'q': lambda text: urllib.parse.quote(text, safe=""),
             'w': lambda text: urllib.parse.unquote(text),
             'a': lambda text: base64.b64encode(text.encode("utf-8")).decode(),
-            's': lambda text: base64.b64decode(text.encode("utf-8")).decode(),
+            's': self._tolerant_b64decode,
             'z': lambda text: json.dumps(json.loads(text), indent=2),
             'x': lambda text: json.dumps(json.loads(text)),
+            'e': self._html_encode_all_special,
+            'r': lambda text: html.unescape(text),
+            'c': lambda text: xml.dom.minidom.parseString(text).toprettyxml(indent="  "),
+            'v': lambda text: re.sub(r'>\s*<', '><', text.replace('\n', ' ').replace('\r', ' ')).strip()
         }
         
         for char in query.strip():
@@ -293,13 +333,24 @@ class RhynoLauncher(FlowLauncher):
             f"Opened {temp_file} in ImHex"
         )]
 
+    def _handle_cookie(self, query):
+        return [self._create_default_response(
+            "Anonymize Cookie",
+            "Replaces `Cookie:` header in clipboard with a placeholder.",
+            "clipCookie"
+        )]
+
     def _handle_quoted_string(self, query):
         content = query[1:-1]
         content_bytes = content.encode("utf-8")
         
+        # Generate unicode codepoints in u0000 syntax
+        unicode_codepoints = " ".join(f"u{ord(char):04x}" for char in content)
+        
         res = [
             self._create_default_response("Char Count (not including \"s)", str(len(content))),
             self._create_default_response("Word Count (not including \"s)", str(len(list(filter(None, content.split(" ")))))),
+            self._create_default_response("Unicode Codepoints", unicode_codepoints, "copy", [unicode_codepoints]),
             self._create_default_response("Hex", content_bytes.hex(), "copy", [content_bytes.hex()]),
             self._create_default_response("MD5", hashlib.md5(content_bytes).hexdigest(), "copy", [hashlib.md5(content_bytes).hexdigest()]),
             self._create_default_response("SHA256", hashlib.sha256(content_bytes).hexdigest(), "copy", [hashlib.sha256(content_bytes).hexdigest()]),
@@ -357,6 +408,11 @@ class RhynoLauncher(FlowLauncher):
     def clipMAndDRegex(self, m):
         d = pyperclip.paste()
         d = re.sub(m, "", d)
+        pyperclip.copy(d)
+
+    def clipCookie(self):
+        d = pyperclip.paste()
+        d = re.sub(r"Cookie:.*", "Cookie: {YOUR COOKIES}", d, flags=re.IGNORECASE)
         pyperclip.copy(d)
 
     def copy( self, d):
